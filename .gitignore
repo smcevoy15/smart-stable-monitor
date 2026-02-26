@@ -1,0 +1,5 @@
+events.csv
+status.json
+*.tmp
+__pycache__/
+

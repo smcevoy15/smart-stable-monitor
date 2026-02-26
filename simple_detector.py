@@ -1,5 +1,7 @@
 import serial
 import time
+import json
+import datetime
 
 ser = serial.Serial("/dev/ttyACM0", 9600) #open connection to nano
 
@@ -16,7 +18,7 @@ RMS_ABS_MIN = 50.0 #minimum threshold even if baseline is tiny
 #cooldown  constant
 COOLDOWN_SECONDS = 15
 
-event_file = open("events.csv", "a") #logging events
+event_file = open("/home/pi/smart-stable/events.csv", "a") #logging events
 
 print("Detector running...")
 
@@ -46,16 +48,18 @@ while True:
 
 	adaptive_threshold = max(baseline_rms * RMS_MULTIPLIER, RMS_ABS_MIN)
 	current_time = time.time()
+	state = "NORMAL"
 	
 	cooldown_active = (current_time - last_alert_time < COOLDOWN_SECONDS) 
-	
+	if cooldown_active:
+		state = "COOLDOWN"
 
 	print("RMS: ", rms, "Peak: ", peak, "Baseline:", round(baseline_rms,1), "Thres:", round(adaptive_threshold,1))
 
 	if peak > PEAK_THRESHOLD: #detection algorithm
 		if not cooldown_active:
 			timestamp = time.time() #current time in seconds
-
+			state = "IMPACT_ALERT"
 			print("ALERT: EVENT DETECTED")
 
 			event_file.write(str(timestamp) + ", EVENT DETECTED,"  + str(peak) + "\n") #save event
@@ -69,6 +73,7 @@ while True:
 		elif current_time - high_rms_start >= EVENT_SECONDS:
 			if not cooldown_active:
 				timestamp = time.time()
+				state = "SUSTAINED_ALERT"
 				print("ALERT: SUSTAINED NOISE")
 				event_file.write(str(timestamp)+ ", SUSTAINED," + str(rms) + "\n")
 				event_file.flush()
@@ -77,3 +82,14 @@ while True:
 	else:
 		high_rms_start = None
 
+	status = {
+		"iso_time": datetime.datetime.now().isoformat(timespec="seconds"),
+		"rms": rms,
+		"peak": peak,
+		"baseline": baseline_rms,
+		"threshold": adaptive_threshold,
+		"state": state
+	}
+	
+	with open("/home/pi/smart-stable/status.json", "w") as f:
+		json.dump(status, f)
