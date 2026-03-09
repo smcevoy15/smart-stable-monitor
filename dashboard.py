@@ -1,4 +1,5 @@
 from flask import Flask, render_template_string
+from json import JSONDecodeError
 import json
 import os
 
@@ -50,32 +51,33 @@ HTML = """
 
 @app.route("/")
 def index():
-    if os.path.exists(STATUS_FILE):
-        with open(STATUS_FILE) as f:
-            status = json.load(f)
-    else:
-        status = {}
-
-    state = status.get("state", "UNKNOWN")
-    state_class = "normal" if state == "NORMAL" else "alert"
-
-    events = ""
-    if os.path.exists(EVENT_FILE):
-        with open(EVENT_FILE) as f:
-            lines = f.readlines()
-            events = "".join(lines[-10:])
-
-    return render_template_string(
-        HTML,
-        state=state,
-        state_class=state_class,
-        time=status.get("iso_time", ""),
-        rms=status.get("rms", ""),
-        peak=status.get("peak", ""),
-        baseline=status.get("baseline", ""),
-        threshold=status.get("threshold", ""),
-        events=events
-    )
+	if os.path.exists(STATUS_FILE):
+		try:
+			with open(STATUS_FILE) as f:
+				status = json.load(f)
+		except (JSONDecodeError, OSError):
+			status = {}
+	else:
+		status = {}
+	state = status.get("state", "UNKNOWN")
+	state_class = "normal" if state == "NORMAL" else "alert"
+	events = ""
+	
+	if os.path.exists(EVENT_FILE):
+		with open(EVENT_FILE) as f:
+			lines = f.readlines()
+			events = "".join(lines[-10:])
+	return render_template_string(
+		HTML,
+		state=state,
+		state_class=state_class,
+		time=status.get("iso_time", ""),
+		rms=status.get("rms", ""),
+		peak=status.get("peak", ""),
+		baseline=status.get("baseline", ""),
+		threshold=status.get("threshold", ""),
+		events=events
+	)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

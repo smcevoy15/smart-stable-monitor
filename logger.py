@@ -7,6 +7,8 @@ PORT ="/dev/ttyACM0"
 BAUD = 9600
 
 ser = serial.Serial(PORT, BAUD, timeout=1)
+
+ 
 print(" Logging started...")
 
 with open("stable_log.csv", "a", newline="") as f:

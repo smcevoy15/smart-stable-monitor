@@ -2,4 +2,5 @@ events.csv
 status.json
 *.tmp
 __pycache__/
+runs/
 
