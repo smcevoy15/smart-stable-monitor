@@ -33,6 +33,8 @@ HTML = """
     </div>
     <table>
         <tr><td><b>Time:</b></td><td>{{ time }}</td></tr>
+	<tr><td><b>Temperature:</b></td><td>{{ tempC }}</td></tr>
+	<tr><td><b>Humidity:</b></td><td>{{ humPct }}</td></tr>
         <tr><td><b>RMS:</b></td><td>{{ rms }}</td></tr>
         <tr><td><b>Peak:</b></td><td>{{ peak }}</td></tr>
         <tr><td><b>Baseline:</b></td><td>{{ baseline }}</td></tr>
@@ -72,6 +74,8 @@ def index():
 		state=state,
 		state_class=state_class,
 		time=status.get("iso_time", ""),
+		tempC=status.get("tempC", ""),
+		humPct=status.get("humPct", ""),
 		rms=status.get("rms", ""),
 		peak=status.get("peak", ""),
 		baseline=status.get("baseline", ""),

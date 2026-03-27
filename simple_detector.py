@@ -34,8 +34,12 @@ while True:
 
 	if len(parts) !=5:
 		continue
-	peak = int(parts[4]) 
+
+	tempC = float(parts[1])
+	humPct = float(parts[2])
 	rms = float(parts[3])
+	peak = int(parts[4])	
+	
 
 	if baseline_rms is None:
 		baseline_rms = max(rms, BASELINE_MIN)
@@ -53,8 +57,8 @@ while True:
 	cooldown_active = (current_time - last_alert_time < COOLDOWN_SECONDS) 
 	if cooldown_active:
 		state = "COOLDOWN"
+	print("Temp:", tempC, "Hum:", humPct, "RMS:", rms, "Peak:", peak, "Baseline:", round(baseline_rms,1), "Thres:", round(adaptive_threshold,1))
 
-	print("RMS: ", rms, "Peak: ", peak, "Baseline:", round(baseline_rms,1), "Thres:", round(adaptive_threshold,1))
 
 	if peak > PEAK_THRESHOLD: #detection algorithm
 		if not cooldown_active:
@@ -84,6 +88,8 @@ while True:
 
 	status = {
 		"iso_time": datetime.datetime.now().isoformat(timespec="seconds"),
+		"tempC": tempC,
+                "humPct": humPct,
 		"rms": rms,
 		"peak": peak,
 		"baseline": baseline_rms,
