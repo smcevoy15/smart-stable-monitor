@@ -19,6 +19,7 @@ HTML = """
         .card { background: white; padding: 20px; margin: 20px auto; width: 400px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
         .alert { background: #ff4d4d; color: white; padding: 10px; font-size: 20px; border-radius: 5px; }
         .normal { background: #4CAF50; color: white; padding: 10px; font-size: 20px; border-radius: 5px; }
+	.temperature-warning { background: #ffb347; color: black; padding: 10px; font-size: 18px; border-radius: 5px; margin-bottom: 15px; }
         table { margin: auto; }
         td { padding: 5px 10px; }
     </style>
@@ -28,13 +29,19 @@ HTML = """
 <h1> Smart Stable Monitor </h1>
 
 <div class="card">
+	{% if temperature_warning %}
+	<div class="temperature-warning">
+    		{{ temperature_warning }}
+	</div>
+	{% endif %}
+
     <div class="{{ state_class }}">
         {{ state }}
     </div>
     <table>
         <tr><td><b>Time:</b></td><td>{{ time }}</td></tr>
-	<tr><td><b>Temperature:</b></td><td>{{ tempC }}</td></tr>
-	<tr><td><b>Humidity:</b></td><td>{{ humPct }}</td></tr>
+	<tr><td><b>Temperature:</b></td><td>{{ tempC }} °C</td></tr>
+	<tr><td><b>Humidity:</b></td><td>{{ humPct }} %</td></tr>
         <tr><td><b>RMS:</b></td><td>{{ rms }}</td></tr>
         <tr><td><b>Peak:</b></td><td>{{ peak }}</td></tr>
         <tr><td><b>Baseline:</b></td><td>{{ baseline }}</td></tr>
@@ -80,6 +87,7 @@ def index():
 		peak=status.get("peak", ""),
 		baseline=status.get("baseline", ""),
 		threshold=status.get("threshold", ""),
+		temperature_warning=status.get("temperature_warning", ""),
 		events=events
 	)
 

@@ -40,6 +40,11 @@ while True:
 	rms = float(parts[3])
 	peak = int(parts[4])	
 	
+	temperature_warning = ""
+	if tempC < 0:
+		temperature_warning = "WARNING: Temperature freezing"
+	elif tempC > 18:
+		temperature_warning = "WARNING: Temperature above 18°C"
 
 	if baseline_rms is None:
 		baseline_rms = max(rms, BASELINE_MIN)
@@ -94,7 +99,8 @@ while True:
 		"peak": peak,
 		"baseline": baseline_rms,
 		"threshold": adaptive_threshold,
-		"state": state
+		"state": state,
+		"temperature_warning": temperature_warning
 	}
 	
 	with open("/home/pi/smart-stable/status.json", "w") as f:
