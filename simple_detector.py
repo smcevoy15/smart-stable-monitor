@@ -2,6 +2,9 @@ import serial
 import time
 import json
 import datetime
+import os
+
+RAW_LOG_FILE = "/home/pi/smart-stable/raw_log.csv"
 
 ser = serial.Serial("/dev/ttyACM0", 9600) #open connection to nano
 
@@ -18,7 +21,13 @@ RMS_ABS_MIN = 50.0 #minimum threshold even if baseline is tiny
 #cooldown  constant
 COOLDOWN_SECONDS = 15
 
+#check if the file exists. more robust than creating in terminal?
+if not os.path.exists(RAW_LOG_FILE):
+    with open(RAW_LOG_FILE, "w") as f:
+        f.write("iso_time,state,tempC,humPct,rms,peak,baseline,threshold,temperature_warning\n")
+
 event_file = open("/home/pi/smart-stable/events.csv", "a") #logging events
+raw_log_file = open(RAW_LOG_FILE, "a")
 
 print("Detector running...")
 
@@ -102,6 +111,11 @@ while True:
 		"state": state,
 		"temperature_warning": temperature_warning
 	}
-	
+	raw_log_file.write(
+		f"{datetime.datetime.now().isoformat(timespec='seconds')},{state},{tempC},{humPct},{rms},{peak},{baseline_rms},{adaptive_threshold},{temperature_warning}\n"
+	)
+	raw_log_file.flush()
+
 	with open("/home/pi/smart-stable/status.json", "w") as f:
 		json.dump(status, f)
+
