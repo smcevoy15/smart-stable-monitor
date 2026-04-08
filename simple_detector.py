@@ -8,10 +8,10 @@ RAW_LOG_FILE = "/home/pi/smart-stable/raw_log.csv"
 
 ser = serial.Serial("/dev/ttyACM0", 9600) #open connection to nano
 
-PEAK_THRESHOLD = 6000
+PEAK_THRESHOLD = 3000
 RMS_THRESHOLD = 80 #adjust later, quiet is 6, clap is 500
-EVENT_SECONDS = 3
-
+EVENT_SECONDS = 2
+IMPACT_RMS_MAX = 400
 #constants for adaptive threshold
 BASELINE_ALPHA = 0.02 #how quickly baseline updates (0.02 is slow)
 BASELINE_MIN = 5.0 #prevents baseline becoming too small
@@ -19,7 +19,7 @@ RMS_MULTIPLIER = 8.0 #sustained trigger =baseline by this
 RMS_ABS_MIN = 50.0 #minimum threshold even if baseline is tiny
 
 #cooldown  constant
-COOLDOWN_SECONDS = 15
+COOLDOWN_SECONDS = 5
 
 #check if the file exists. more robust than creating in terminal?
 if not os.path.exists(RAW_LOG_FILE):
@@ -66,6 +66,7 @@ while True:
 
 	adaptive_threshold = max(baseline_rms * RMS_MULTIPLIER, RMS_ABS_MIN)
 	current_time = time.time()
+	iso_time = datetime.datetime.now().isoformat(timespec="seconds")
 	state = "NORMAL"
 	
 	cooldown_active = (current_time - last_alert_time < COOLDOWN_SECONDS) 
@@ -74,13 +75,13 @@ while True:
 	print("Temp:", tempC, "Hum:", humPct, "RMS:", rms, "Peak:", peak, "Baseline:", round(baseline_rms,1), "Thres:", round(adaptive_threshold,1))
 
 
-	if peak > PEAK_THRESHOLD: #detection algorithm
+	if peak > PEAK_THRESHOLD and rms < IMPACT_RMS_MAX : #detection algorithm
 		if not cooldown_active:
 			timestamp = time.time() #current time in seconds
 			state = "IMPACT_ALERT"
-			print("ALERT: EVENT DETECTED")
+			print("ALERT: IMPACT")
 
-			event_file.write(str(timestamp) + ", EVENT DETECTED,"  + str(peak) + "\n") #save event
+			event_file.write(iso_time + ", IMPACT,"  + str(peak) + "\n") #save event
 
 			event_file.flush() #froced to save immediately in case of power cut
 			last_alert_time =  current_time
@@ -93,7 +94,7 @@ while True:
 				timestamp = time.time()
 				state = "SUSTAINED_ALERT"
 				print("ALERT: SUSTAINED NOISE")
-				event_file.write(str(timestamp)+ ", SUSTAINED," + str(rms) + "\n")
+				event_file.write(iso_time + ", SUSTAINED," + str(rms) + "\n")
 				event_file.flush()
 				last_alert_time  =  current_time
 			high_rms_start = None
