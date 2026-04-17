@@ -3,7 +3,7 @@ import time
 import json
 import datetime
 import os
-
+import subprocess
 RAW_LOG_FILE = "/home/pi/smart-stable/raw_log.csv"
 
 ser = serial.Serial("/dev/ttyACM0", 9600) #open connection to nano
@@ -97,6 +97,16 @@ while True:
 				event_file.write(iso_time + ", SUSTAINED," + str(rms) + "\n")
 				event_file.flush()
 				last_alert_time  =  current_time
+				
+				wav_name = f"/home/pi/smart-stable/audio_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+				subprocess.Popen([
+					"arecord",
+					"-D", "hw:3,0", #use the BU5 MIC
+					"-d", "5", #duration in seconds
+					"-f", "S16_LE", #format
+					"-r", "16000", #sample rate
+					wav_name
+				])
 			high_rms_start = None
 	else:
 		high_rms_start = None
