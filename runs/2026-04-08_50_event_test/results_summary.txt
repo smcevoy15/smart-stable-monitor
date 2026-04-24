@@ -1,0 +1,54 @@
+50-Event Automated Playback Validation Summary
+
+Test date:
+2026-04-08
+
+Test method:
+- A laptop-based playback script was used to generate 50 labelled acoustic events.
+- Two classes were used:
+  - IMPACT
+  - SUSTAINED
+- Each event was timestamped and saved to a ground-truth CSV on the laptop.
+- The Raspberry Pi detector logged detected events to pi_events.csv.
+- The Pi detections were filtered to the test time window and compared against the laptop ground truth.
+- Matching was performed using a time tolerance of 8 seconds.
+
+Detector settings used:
+- PEAK_THRESHOLD = 1000
+- EVENT_SECONDS = 1.5
+- IMPACT_RMS_MAX = 400
+
+Results:
+- Total ground truth events: 50
+- Matched detections: 48
+- Misses: 2
+- False positives: 0
+- Class-correct matches: 48
+- Class-wrong matches: 0
+
+Performance metrics:
+- Recall: 0.960
+- Precision: 1.000
+- Accuracy on all ground-truth events: 0.960
+
+Confusion matrix:
+- IMPACT detected as IMPACT: 23
+- IMPACT detected as SUSTAINED: 0
+- IMPACT missed: 2
+- SUSTAINED detected as IMPACT: 0
+- SUSTAINED detected as SUSTAINED: 25
+- SUSTAINED missed: 0
+
+Interpretation:
+- The detector performed strongly under controlled playback conditions.
+- Sustained events were detected reliably in all test cases.
+- Impact events were also detected reliably, with only 2 misses out of 25.
+- No false positives were observed within the analysed test window.
+- No class confusions occurred between IMPACT and SUSTAINED.
+- The absolute matched time errors were typically between 5 and 8 seconds.
+- This delay likely reflects the test procedure and logging method, because the laptop timestamp appears to have been recorded before acoustic playback onset.
+
+Notes for report:
+- State clearly that this was a controlled labelled playback validation, not a full real-stable trial.
+- Emphasise that the result demonstrates reliable discrimination between IMPACT and SUSTAINED under repeatable test conditions.
+- Mention that the stable deployment and CCTV comparison will provide the next stage of real-world validation.

@@ -1,0 +1,22 @@
+Stable Test
+Date: 11/4/26
+Location: Laois
+
+Setup:
+-PI and Nano
+Pi hotspot mode
+-phone for dashboard
+-Tapo camera
+
+Plan:
+-Phase A: 15 impacts
+-Phase B: horse in stable
+
+Method:
+-Phone notes timestamps
+-CCTV review
+
+Detector:
+-PEAK_THRESHOLD = 1000
+-EVENT_SECONDS = 1.5
+- IMPACT_RMS_MAX = 400

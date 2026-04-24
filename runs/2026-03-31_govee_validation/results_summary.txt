@@ -1,0 +1,37 @@
+Govee vs Pi/Nano Environmental Validation Summary
+
+Test window:
+2026-03-31 14:02 to 2026-03-31 17:02
+
+Data handling:
+- Pi/Nano raw log was filtered to the same overlapping time window as the Govee export.
+- Pi/Nano data were averaged to 1-minute intervals to match the Govee sampling period.
+- Temperature and humidity were compared using overlay plots, scatter plots, MAE, RMSE, and bias.
+
+Results:
+- Rows merged: 181
+- Temperature MAE: 1.822 °C
+- Temperature RMSE: 1.885 °C
+- Temperature Bias: +1.665 °C
+
+- Humidity MAE: 3.647 %
+- Humidity RMSE: 3.809 %
+- Humidity Bias: -3.164 %
+
+Interpretation:
+- The Pi/Nano and Govee measurements showed broadly similar time-varying trends.
+- However, a clear systematic offset was present.
+- The Pi/Nano temperature readings were generally higher than the Govee readings.
+- The Pi/Nano humidity readings were generally lower than the Govee readings.
+- Agreement worsened during periods of rapid environmental change.
+- This suggests the Pi/Nano sensing chain is suitable for trend monitoring and threshold-based alerts, but not yet calibrated for close agreement with the reference logger.
+
+Notes for report:
+- Mention possible causes of disagreement:
+  sensor tolerance,
+  placement mismatch,
+  airflow differences,
+  response time differences,
+  lack of calibration.
+- Use this as a validation result, not a failure.
+- State clearly that the system tracked environmental change, but with measurable bias.

@@ -1,0 +1,122 @@
+import serial
+import time
+import json
+import datetime
+import os
+
+RAW_LOG_FILE = "/home/pi/smart-stable/raw_log.csv"
+
+ser = serial.Serial("/dev/ttyACM0", 9600) #open connection to nano
+
+PEAK_THRESHOLD = 3000
+RMS_THRESHOLD = 80 #adjust later, quiet is 6, clap is 500
+EVENT_SECONDS = 2
+IMPACT_RMS_MAX = 400
+#constants for adaptive threshold
+BASELINE_ALPHA = 0.02 #how quickly baseline updates (0.02 is slow)
+BASELINE_MIN = 5.0 #prevents baseline becoming too small
+RMS_MULTIPLIER = 8.0 #sustained trigger =baseline by this
+RMS_ABS_MIN = 50.0 #minimum threshold even if baseline is tiny
+
+#cooldown  constant
+COOLDOWN_SECONDS = 5
+
+#check if the file exists. more robust than creating in terminal?
+if not os.path.exists(RAW_LOG_FILE):
+    with open(RAW_LOG_FILE, "w") as f:
+        f.write("iso_time,state,tempC,humPct,rms,peak,baseline,threshold,temperature_warning\n")
+
+event_file = open("/home/pi/smart-stable/events.csv", "a") #logging events
+raw_log_file = open(RAW_LOG_FILE, "a")
+
+print("Detector running...")
+
+high_rms_start = None #stores time when RMS went high
+baseline_rms = None
+last_alert_time = 0 #variable stores when last alert happened
+
+
+while True:
+	line = ser.readline().decode().strip() #read one csv line from nano
+	parts = line.split(",") #splits each part of reading ie time/temp
+
+
+	if len(parts) !=5:
+		continue
+
+	tempC = float(parts[1])
+	humPct = float(parts[2])
+	rms = float(parts[3])
+	peak = int(parts[4])	
+	
+	temperature_warning = ""
+	if tempC < 0:
+		temperature_warning = "WARNING: Temperature freezing"
+	elif tempC > 18:
+		temperature_warning = "WARNING: Temperature above 18°C"
+
+	if baseline_rms is None:
+		baseline_rms = max(rms, BASELINE_MIN)
+	else:
+		#update baseline hen not in loud event
+		if rms < baseline_rms * 3:
+			baseline_rms = (1-BASELINE_ALPHA)* baseline_rms + BASELINE_ALPHA * rms
+			if baseline_rms < BASELINE_MIN:
+				baseline_rms = BASELINE_MIN
+
+	adaptive_threshold = max(baseline_rms * RMS_MULTIPLIER, RMS_ABS_MIN)
+	current_time = time.time()
+	iso_time = datetime.datetime.now().isoformat(timespec="seconds")
+	state = "NORMAL"
+	
+	cooldown_active = (current_time - last_alert_time < COOLDOWN_SECONDS) 
+	if cooldown_active:
+		state = "COOLDOWN"
+	print("Temp:", tempC, "Hum:", humPct, "RMS:", rms, "Peak:", peak, "Baseline:", round(baseline_rms,1), "Thres:", round(adaptive_threshold,1))
+
+
+	if peak > PEAK_THRESHOLD and rms < IMPACT_RMS_MAX : #detection algorithm
+		if not cooldown_active:
+			timestamp = time.time() #current time in seconds
+			state = "IMPACT_ALERT"
+			print("ALERT: IMPACT")
+
+			event_file.write(iso_time + ", IMPACT,"  + str(peak) + "\n") #save event
+
+			event_file.flush() #froced to save immediately in case of power cut
+			last_alert_time =  current_time
+
+	if rms> adaptive_threshold:
+		if high_rms_start is None:
+			high_rms_start =  time.time()
+		elif current_time - high_rms_start >= EVENT_SECONDS:
+			if not cooldown_active:
+				timestamp = time.time()
+				state = "SUSTAINED_ALERT"
+				print("ALERT: SUSTAINED NOISE")
+				event_file.write(iso_time + ", SUSTAINED," + str(rms) + "\n")
+				event_file.flush()
+				last_alert_time  =  current_time
+			high_rms_start = None
+	else:
+		high_rms_start = None
+
+	status = {
+		"iso_time": datetime.datetime.now().isoformat(timespec="seconds"),
+		"tempC": tempC,
+                "humPct": humPct,
+		"rms": rms,
+		"peak": peak,
+		"baseline": baseline_rms,
+		"threshold": adaptive_threshold,
+		"state": state,
+		"temperature_warning": temperature_warning
+	}
+	raw_log_file.write(
+		f"{datetime.datetime.now().isoformat(timespec='seconds')},{state},{tempC},{humPct},{rms},{peak},{baseline_rms},{adaptive_threshold},{temperature_warning}\n"
+	)
+	raw_log_file.flush()
+
+	with open("/home/pi/smart-stable/status.json", "w") as f:
+		json.dump(status, f)
+

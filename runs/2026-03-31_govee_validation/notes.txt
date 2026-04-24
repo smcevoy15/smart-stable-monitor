@@ -1,0 +1,16 @@
+Govee vs Smart Stable environmental validation
+
+Date: 31/03/2026
+Location: Indoors, County Laois.
+Start time:13:00
+End time:
+
+Setup:
+- Nano and Govee placed side by side on desk
+- Same height
+- Away from direct sunlight / radiator
+
+Notes:
+- Window opened at:
+- Door opened at:
+- Heating changed at:
